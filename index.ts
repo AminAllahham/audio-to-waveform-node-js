@@ -1,52 +1,24 @@
-const fs = require("fs");
-const { decode } = require("wav-decoder");
+import audioToWaveformData, { Options } from "audioform";
+import { readFile } from "fs/promises";
 
-const inputFile = "file_example_WAV_10MG (1).wav";
-const desiredMaxValue = 10;
-const desiredLength = 120;
-
-async function generateWaveformDataArray() {
-  try {
-    const buffer = fs.readFileSync(inputFile);
-    const audioData = await decode(buffer);
-    const { channelData, sampleRate } = audioData;
-    
-    const audioDuration = channelData[0].length / sampleRate; // Duration in seconds
-    let windowSizeMs = Math.ceil((audioDuration / desiredLength) * 1000); // Adjust window size based on desired length
-    
-    const samplesPerWindow = Math.floor(sampleRate * (windowSizeMs / 1000));
-    const waveformDataArray = [];
-    for (let i = 0; i < channelData[0].length; i += samplesPerWindow) {
-      let sum = 0;
-      for (let j = 0; j < samplesPerWindow; j++) {
-        if (i + j < channelData[0].length) {
-          sum += Math.abs(channelData[0][i + j]);
-        }
-      }
-      const average = sum / samplesPerWindow;
-      waveformDataArray.push(average);
-    }
-
-    const maxValue = Math.max(...waveformDataArray);
-    const scaledWaveformDataArray = waveformDataArray.map(
-      (value) => (value / maxValue) * desiredMaxValue
-    );
-    return { scaledWaveformDataArray, sampleRate };
-  } catch (error) {
-    console.error("Error:", error);
-  }
+function scaleArrayToRange(arr, min, max, newMin, newMax) {
+  const scaledArray = arr.map((value) => {
+    const scaledValue =
+      ((value - min) / (max - min)) * (newMax - newMin) + newMin;
+    return scaledValue;
+  });
+  return scaledArray;
 }
 
-generateWaveformDataArray()
-  .then(({ scaledWaveformDataArray, sampleRate }) => {
-    // Save text file with scaled waveform data
-    fs.writeFileSync(
-      "waveform_data.txt",
-      scaledWaveformDataArray.join("\n"),
-      "utf8"
-    );
+async function run() {
+  const options: Options = {
+    samples: 30,
+    channel: 0,
+  };
+  const buffer: Buffer = await readFile("./aa.mp3");
+  const waveformData: number[] = await audioToWaveformData(buffer, options);
 
-    console.log("Scaled Waveform Data Array:", scaledWaveformDataArray);
-    console.log("Sample Rate:", sampleRate);
-  })
-  .catch((error) => console.error("Error:", error));
+  console.log(waveformData.map((x) => x * 10));
+}
+
+run();
