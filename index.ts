@@ -2,14 +2,18 @@ const fs = require("fs");
 const { decode } = require("wav-decoder");
 
 const inputFile = "file_example_WAV_10MG (1).wav";
-const windowSizeMs = 1000;
 const desiredMaxValue = 10;
+const desiredLength = 120;
 
 async function generateWaveformDataArray() {
   try {
     const buffer = fs.readFileSync(inputFile);
     const audioData = await decode(buffer);
     const { channelData, sampleRate } = audioData;
+    
+    const audioDuration = channelData[0].length / sampleRate; // Duration in seconds
+    let windowSizeMs = Math.ceil((audioDuration / desiredLength) * 1000); // Adjust window size based on desired length
+    
     const samplesPerWindow = Math.floor(sampleRate * (windowSizeMs / 1000));
     const waveformDataArray = [];
     for (let i = 0; i < channelData[0].length; i += samplesPerWindow) {
