@@ -12,13 +12,22 @@ function scaleArrayToRange(arr, min, max, newMin, newMax) {
 
 async function run() {
   const options: Options = {
-    samples: 30,
+    samples: 32,
     channel: 0,
   };
-  const buffer: Buffer = await readFile("./aa.mp3");
+  const buffer: Buffer = await readFile("./record_out-1.wav");
   const waveformData: number[] = await audioToWaveformData(buffer, options);
 
-  console.log(waveformData.map((x) => x * 10));
+
+
+  const min = Math.min(...waveformData);
+  const max = Math.max(...waveformData);
+
+  const scaledWaveformData = scaleArrayToRange(waveformData, min, max, 1, 10);
+
+  console.log(scaledWaveformData);
+
+  
 }
 
 run();
